@@ -85,6 +85,7 @@ func main() {
 				if errExec != nil {
 					log.Fatal(errExec)
 				}
+				close(m.ChanOk)
 			}
 		}
 	}()
