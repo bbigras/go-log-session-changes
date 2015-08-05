@@ -3,13 +3,14 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"github.com/brunoqc/go-windows-session-notifications"
-	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"os"
 	"os/user"
 	"path/filepath"
 	"time"
+
+	"github.com/brunoqc/go-windows-session-notifications"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 const (
