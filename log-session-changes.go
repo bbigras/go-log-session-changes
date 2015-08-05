@@ -26,17 +26,9 @@ func main() {
 	dataPath := filepath.Join(appData, "go-log-session-changes")
 	dbFilePath := filepath.Join(dataPath, "database.sqlite")
 
-	if _, err := os.Stat(dataPath); err != nil {
-		if os.IsNotExist(err) {
-			// file does not exist
-			log.Println("init data directory")
-			errMkdirAll := os.MkdirAll(dataPath, 0600)
-			if errMkdirAll != nil {
-				log.Panicln("errMkdirAll", errMkdirAll)
-			}
-		} else {
-			log.Panic(err)
-		}
+	errMkdirAll := os.MkdirAll(dataPath, 0600)
+	if errMkdirAll != nil {
+		log.Panicln("errMkdirAll", errMkdirAll)
 	}
 
 	m_user, errUser := user.Current()
