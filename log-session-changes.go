@@ -14,8 +14,10 @@ import (
 )
 
 const (
-	APP_STARTED   = 1
-	SESSION_EVENT = 2
+	// AppStarted is when the application starts
+	AppStarted = 1
+	// SessionEvent is when we get a session event (lock, unlock, logoff)
+	SessionEvent = 2
 )
 
 func main() {
@@ -32,7 +34,7 @@ func main() {
 		log.Panicln("errMkdirAll", errMkdirAll)
 	}
 
-	m_user, errUser := user.Current()
+	currentUser, errUser := user.Current()
 	if errUser != nil {
 		log.Panicln(errUser)
 	}
@@ -57,7 +59,7 @@ func main() {
 		return
 	}
 
-	_, errExec := db.Exec(`INSERT INTO log (hostname, username, dateEvent, type, UMsg, Param) VALUES (?, ?, ?, ?, ?, ?)`, hostname, m_user.Username, time.Now(), APP_STARTED, nil, nil)
+	_, errExec := db.Exec(`INSERT INTO log (hostname, username, dateEvent, type, UMsg, Param) VALUES (?, ?, ?, ?, ?, ?)`, hostname, currentUser.Username, time.Now(), AppStarted, nil, nil)
 	if errExec != nil {
 		log.Fatal(errExec)
 	}
@@ -74,7 +76,7 @@ func main() {
 				log.Println("received", m.UMsg, m.Param)
 
 				// UMsg integer, WParam integer
-				_, errExec := db.Exec(`INSERT INTO log (hostname, username, dateEvent, type, UMsg, Param) VALUES (?, ?, ?, ?, ?, ?)`, hostname, m_user.Username, time.Now(), SESSION_EVENT, m.UMsg, m.Param)
+				_, errExec := db.Exec(`INSERT INTO log (hostname, username, dateEvent, type, UMsg, Param) VALUES (?, ?, ?, ?, ?, ?)`, hostname, currentUser.Username, time.Now(), SessionEvent, m.UMsg, m.Param)
 				if errExec != nil {
 					log.Fatal(errExec)
 				}
