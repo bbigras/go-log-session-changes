@@ -44,6 +44,21 @@ func setGlobal(dataPath string) error {
 	return nil
 }
 
+func logEvent(host, user string, timestamp time.Time, leType int, umsg, param *int) error {
+	db, err := sql.Open("sqlite3", sqliteStr)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	_, errExec := db.Exec("INSERT INTO log (hostname, username, dateEvent, type, UMsg, Param) VALUES (?, ?, ?, ?, ?, ?);", host, user, timestamp, leType, umsg, param)
+	if errExec != nil {
+		return errExec
+	}
+
+	return nil
+}
+
 func main() {
 	appData := os.Getenv("APPDATA")
 	if appData == "" {
@@ -84,9 +99,9 @@ func main() {
 		return
 	}
 
-	_, errExec := db.Exec(`INSERT INTO log (hostname, username, dateEvent, type, UMsg, Param) VALUES (?, ?, ?, ?, ?, ?)`, hostname, username, time.Now(), AppStarted, nil, nil)
-	if errExec != nil {
-		log.Fatal(errExec)
+	errLog := logEvent(hostname, username, time.Now(), AppStarted, nil, nil)
+	if errLog != nil {
+		log.Fatal(errLog)
 	}
 
 	quit := make(chan int)
@@ -101,9 +116,9 @@ func main() {
 				log.Println("received", m.UMsg, m.Param)
 
 				// UMsg integer, WParam integer
-				_, errExec := db.Exec(`INSERT INTO log (hostname, username, dateEvent, type, UMsg, Param) VALUES (?, ?, ?, ?, ?, ?)`, hostname, username, time.Now(), SessionEvent, m.UMsg, m.Param)
-				if errExec != nil {
-					log.Fatal(errExec)
+				errLog := logEvent(hostname, username, time.Now(), SessionEvent, &m.UMsg, &m.Param)
+				if errLog != nil {
+					log.Fatal(errLog)
 				}
 				close(m.ChanOk)
 			}
