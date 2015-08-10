@@ -21,6 +21,29 @@ const (
 	SessionEvent = 2
 )
 
+var (
+	sqliteStr string
+	hostname  string
+	username  string
+)
+
+func setGlobal(dataPath string) error {
+	sqliteStr = fmt.Sprintf("file:%s?cache=shared&mode=rwc", filepath.Join(dataPath, "database.sqlite"))
+
+	u, err := user.Current()
+	if err != nil {
+		return err
+	}
+	username = u.Username
+
+	hostname, err = os.Hostname()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func main() {
 	appData := os.Getenv("APPDATA")
 	if appData == "" {
@@ -28,7 +51,6 @@ func main() {
 	}
 
 	dataPath := filepath.Join(appData, "go-log-session-changes")
-	dbFilePath := filepath.Join(dataPath, "database.sqlite")
 
 	errMkdirAll := os.MkdirAll(dataPath, 0600)
 	if errMkdirAll != nil {
@@ -42,18 +64,13 @@ func main() {
 		MaxAge:     14, //days
 	})
 
-	currentUser, errUser := user.Current()
-	if errUser != nil {
-		log.Panicln(errUser)
-	}
-
-	hostname, errHostname := os.Hostname()
-	if errHostname != nil {
-		log.Panic(errHostname)
+	errSetGlobal := setGlobal(dataPath)
+	if errSetGlobal != nil {
+		log.Fatal(errSetGlobal)
 	}
 
 	// db, err := sql.Open("sqlite3", "./foo.db")
-	db, err := sql.Open("sqlite3", fmt.Sprintf("file:%s?cache=shared&mode=rwc", dbFilePath))
+	db, err := sql.Open("sqlite3", sqliteStr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -67,7 +84,7 @@ func main() {
 		return
 	}
 
-	_, errExec := db.Exec(`INSERT INTO log (hostname, username, dateEvent, type, UMsg, Param) VALUES (?, ?, ?, ?, ?, ?)`, hostname, currentUser.Username, time.Now(), AppStarted, nil, nil)
+	_, errExec := db.Exec(`INSERT INTO log (hostname, username, dateEvent, type, UMsg, Param) VALUES (?, ?, ?, ?, ?, ?)`, hostname, username, time.Now(), AppStarted, nil, nil)
 	if errExec != nil {
 		log.Fatal(errExec)
 	}
@@ -84,7 +101,7 @@ func main() {
 				log.Println("received", m.UMsg, m.Param)
 
 				// UMsg integer, WParam integer
-				_, errExec := db.Exec(`INSERT INTO log (hostname, username, dateEvent, type, UMsg, Param) VALUES (?, ?, ?, ?, ?, ?)`, hostname, currentUser.Username, time.Now(), SessionEvent, m.UMsg, m.Param)
+				_, errExec := db.Exec(`INSERT INTO log (hostname, username, dateEvent, type, UMsg, Param) VALUES (?, ?, ?, ?, ?, ?)`, hostname, username, time.Now(), SessionEvent, m.UMsg, m.Param)
 				if errExec != nil {
 					log.Fatal(errExec)
 				}
