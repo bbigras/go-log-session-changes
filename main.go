@@ -101,6 +101,8 @@ func main() {
 		MaxAge:     14, //days
 	})
 
+	log.Println("startup")
+
 	errSetGlobal := setGlobal(dataPath)
 	if errSetGlobal != nil {
 		log.Fatal(errSetGlobal)
