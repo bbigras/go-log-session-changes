@@ -59,6 +59,21 @@ func logEvent(host, user string, timestamp time.Time, leType int, umsg, param *i
 	return nil
 }
 
+func startUp() error {
+	db, err := sql.Open("sqlite3", sqliteStr)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	_, err = db.Exec("create table if not exists log (id integer not null primary key AUTOINCREMENT, hostname text, username text, dateEvent datetime, type integer, UMsg integer, Param integer);")
+	if err != nil {
+		return err
+	}
+
+	return logEvent(hostname, username, time.Now(), AppStarted, nil, nil)
+}
+
 func main() {
 	appData := os.Getenv("APPDATA")
 	if appData == "" {
@@ -84,25 +99,17 @@ func main() {
 		log.Fatal(errSetGlobal)
 	}
 
+	errStartup := startUp()
+	if errStartup != nil {
+		log.Println("errStartup", errStartup)
+	}
+
 	// db, err := sql.Open("sqlite3", "./foo.db")
 	db, err := sql.Open("sqlite3", sqliteStr)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
-
-	// Create table if needed
-	sql := `create table if not exists log (id integer not null primary key AUTOINCREMENT, hostname text, username text, dateEvent datetime, type integer, UMsg integer, Param integer);`
-	_, err = db.Exec(sql)
-	if err != nil {
-		log.Printf("%q: %s\n", err, sql)
-		return
-	}
-
-	errLog := logEvent(hostname, username, time.Now(), AppStarted, nil, nil)
-	if errLog != nil {
-		log.Fatal(errLog)
-	}
 
 	quit := make(chan int)
 
