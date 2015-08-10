@@ -74,6 +74,13 @@ func startUp() error {
 	return logEvent(hostname, username, time.Now(), AppStarted, nil, nil)
 }
 
+func processMsg(m session_notifications.Message) error {
+	defer close(m.ChanOk)
+
+	log.Println("received", m.UMsg, m.Param)
+	return logEvent(hostname, username, time.Now(), SessionEvent, &m.UMsg, &m.Param)
+}
+
 func main() {
 	appData := os.Getenv("APPDATA")
 	if appData == "" {
@@ -120,14 +127,10 @@ func main() {
 		for {
 			select {
 			case m := <-chanMessages:
-				log.Println("received", m.UMsg, m.Param)
-
-				// UMsg integer, WParam integer
-				errLog := logEvent(hostname, username, time.Now(), SessionEvent, &m.UMsg, &m.Param)
-				if errLog != nil {
-					log.Fatal(errLog)
+				errProcess := processMsg(m)
+				if errProcess != nil {
+					log.Println("errProcess", errProcess)
 				}
-				close(m.ChanOk)
 			}
 		}
 	}()
