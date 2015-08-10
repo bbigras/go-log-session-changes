@@ -113,7 +113,6 @@ func main() {
 		log.Println("errStartup", errStartup)
 	}
 
-	// db, err := sql.Open("sqlite3", "./foo.db")
 	db, err := sql.Open("sqlite3", sqliteStr)
 	if err != nil {
 		log.Fatal(err)
