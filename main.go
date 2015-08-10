@@ -11,6 +11,7 @@ import (
 
 	"github.com/brunoqc/go-windows-session-notifications"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/natefinch/lumberjack"
 )
 
 const (
@@ -33,6 +34,13 @@ func main() {
 	if errMkdirAll != nil {
 		log.Panicln("errMkdirAll", errMkdirAll)
 	}
+
+	log.SetOutput(&lumberjack.Logger{
+		Filename:   filepath.Join(dataPath, "go-log-session-changes.log"),
+		MaxSize:    1, // megabytes
+		MaxBackups: 3,
+		MaxAge:     14, //days
+	})
 
 	currentUser, errUser := user.Current()
 	if errUser != nil {
